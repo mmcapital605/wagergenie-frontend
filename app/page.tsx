@@ -1,50 +1,50 @@
 'use client';
 
-import { createBrowserClient } from '@supabase/ssr'
-import { useEffect, useState } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function Home() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
   const router = useRouter()
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = createClientComponentClient()
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setMessage('')
     
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-          data: {
-            username: email.split('@')[0],
-          }
-        }
+        password: email // Using email as password for simplicity
       })
-      if (error) throw error
+
+      if (error) {
+        // If sign in fails, try to sign up
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password: email,
+          options: {
+            data: {
+              username: email.split('@')[0],
+            }
+          }
+        })
+
+        if (signUpError) throw signUpError
+      }
+
+      // If we get here, either sign in or sign up was successful
       router.push('/dashboard')
+      router.refresh()
+      
     } catch (error) {
       console.error('Error:', error)
-      // If signup fails, try signing in
-      try {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-        if (signInError) throw signInError
-        router.push('/dashboard')
-      } catch (signInError) {
-        alert(signInError.message)
-      }
+      setMessage('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -105,23 +105,16 @@ export default function Home() {
               <div>
                 <input
                   type="email"
-                  placeholder="Your email"
+                  placeholder="Enter your email to start winning"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400"
                   required
                 />
               </div>
-              <div>
-                <input
-                  type="password"
-                  placeholder="Choose a password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  required
-                />
-              </div>
+              {message && (
+                <div className="text-red-400 text-sm">{message}</div>
+              )}
               <button
                 type="submit"
                 disabled={loading}
