@@ -2,41 +2,54 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get: (name) => req.cookies.get(name)?.value,
-        set: (name, value, options) => {
-          res.cookies.set({ name, value, ...options })
+        get(name: string) {
+          return request.cookies.get(name)?.value
         },
-        remove: (name, options) => {
-          res.cookies.set({ name, value: '', ...options })
+        set(name: string, value: string, options: any) {
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name: string, options: any) {
+          response.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
         },
       },
     }
   )
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
 
-  // If user is signed in and the current path is / redirect the user to /dashboard
-  if (session && req.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboard', req.url))
+  // If user is not signed in and the current path is /genie, redirect to /
+  if (!session && request.nextUrl.pathname.startsWith('/genie')) {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // If user is not signed in and the current path is /dashboard redirect the user to /
-  if (!session && req.nextUrl.pathname === '/dashboard') {
-    return NextResponse.redirect(new URL('/', req.url))
+  // If user is signed in and the current path is /, redirect to /genie
+  if (session && request.nextUrl.pathname === '/') {
+    return NextResponse.redirect(new URL('/genie', request.url))
   }
 
-  return res
+  return response
 }
 
 export const config = {
-  matcher: ['/', '/dashboard']
+  matcher: ['/', '/genie/:path*']
 } 

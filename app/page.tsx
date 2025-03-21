@@ -24,24 +24,37 @@ export default function Home() {
     
     try {
       if (isSignUp) {
-        const { error: signUpError } = await supabase.auth.signUp({
+        // First try to sign up
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
             data: {
               username: email.split('@')[0],
-              plan: 'free' // Default plan
+              plan: 'free'
             }
           }
         })
 
         if (signUpError) {
           throw signUpError
-        } else {
-          setMessage('Please check your email to verify your account!')
-          return
         }
+
+        // If sign up successful, try immediate sign in
+        if (signUpData.user) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          })
+
+          if (!signInError) {
+            router.push('/genie')
+            return
+          }
+        }
+
+        setMessage('Account created! You can now sign in.')
+        setIsSignUp(false) // Switch to sign in mode
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -51,11 +64,17 @@ export default function Home() {
         if (signInError) throw signInError
         
         router.push('/genie')
-        router.refresh()
       }
     } catch (error: any) {
       console.error('Error:', error)
-      setMessage(error.message || 'Something went wrong. Please try again.')
+      if (error.message.includes('Email rate limit exceeded')) {
+        setMessage('Please wait a moment before trying again.')
+      } else if (error.message.includes('User already registered')) {
+        setMessage('This email is already registered. Please sign in.')
+        setIsSignUp(false)
+      } else {
+        setMessage(error.message || 'Something went wrong. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
