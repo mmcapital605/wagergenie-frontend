@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation'
 
 export default function Home() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [isSignUp, setIsSignUp] = useState(true)
   const router = useRouter()
 
   const supabase = createBrowserClient(
@@ -15,39 +17,45 @@ export default function Home() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setMessage('')
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password: email // Using email as password for simplicity
-      })
-
-      if (error) {
-        // If sign in fails, try to sign up
+      if (isSignUp) {
         const { error: signUpError } = await supabase.auth.signUp({
           email,
-          password: email,
+          password,
           options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
             data: {
               username: email.split('@')[0],
+              plan: 'free' // Default plan
             }
           }
         })
 
-        if (signUpError) throw signUpError
-      }
+        if (signUpError) {
+          throw signUpError
+        } else {
+          setMessage('Please check your email to verify your account!')
+          return
+        }
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
 
-      // If we get here, either sign in or sign up was successful
-      router.push('/dashboard')
-      router.refresh()
-      
-    } catch (error) {
+        if (signInError) throw signInError
+        
+        router.push('/genie')
+        router.refresh()
+      }
+    } catch (error: any) {
       console.error('Error:', error)
-      setMessage('Something went wrong. Please try again.')
+      setMessage(error.message || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -99,24 +107,37 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Sign Up Form */}
+          {/* Updated Sign Up Form */}
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 w-full max-w-md mx-auto border border-white/20">
             <h2 className="text-2xl font-bold text-white mb-6">
-              Make Your First Wish ✨
+              {isSignUp ? 'Make Your First Wish ✨' : 'Welcome Back! 🧞‍♂️'}
             </h2>
-            <form onSubmit={handleSignIn} className="space-y-4">
+            <form onSubmit={handleAuth} className="space-y-4">
               <div>
                 <input
                   type="email"
-                  placeholder="Enter your email to start winning"
+                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400"
                   required
                 />
               </div>
+              <div>
+                <input
+                  type="password"
+                  placeholder="Choose a password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  required
+                  minLength={6}
+                />
+              </div>
               {message && (
-                <div className="text-red-400 text-sm">{message}</div>
+                <div className={`text-sm ${message.includes('check your email') ? 'text-green-400' : 'text-red-400'}`}>
+                  {message}
+                </div>
               )}
               <button
                 type="submit"
@@ -125,8 +146,15 @@ export default function Home() {
               >
                 <span className="absolute inset-0 bg-white/20 transform group-hover:translate-y-0 -translate-y-full transition-transform"></span>
                 <span className="relative">
-                  {loading ? 'Summoning Genie...' : 'Start Winning Now 🎯'}
+                  {loading ? 'Summoning Genie...' : (isSignUp ? 'Start Winning Now 🎯' : 'Sign In 🎯')}
                 </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="w-full text-white/70 hover:text-white text-sm transition"
+              >
+                {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
               </button>
             </form>
           </div>
