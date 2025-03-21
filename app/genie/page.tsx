@@ -22,11 +22,102 @@ interface Message {
   timestamp: Date
 }
 
+// Sample data to show while fetching from Supabase
+const samplePicks: Pick[] = [
+  {
+    id: '1',
+    sport: 'NFL',
+    match: 'Kansas City Chiefs vs. Baltimore Ravens',
+    prediction: 'Chiefs -3.5',
+    confidence: 85,
+    result: 'win',
+    explanation: 'Chiefs offense has been unstoppable at home.',
+    date: new Date().toISOString()
+  },
+  {
+    id: '2',
+    sport: 'NBA',
+    match: 'Boston Celtics vs. Los Angeles Lakers',
+    prediction: 'Over 219.5',
+    confidence: 78,
+    result: 'pending',
+    explanation: 'Both teams have been scoring at high rates in their last 5 games.',
+    date: new Date().toISOString()
+  },
+  {
+    id: '3',
+    sport: 'MLB',
+    match: 'New York Yankees vs. Houston Astros',
+    prediction: 'Yankees ML',
+    confidence: 72,
+    result: 'pending',
+    explanation: 'Yankees are starting their ace pitcher with a strong home record.',
+    date: new Date().toISOString()
+  },
+  {
+    id: '4',
+    sport: 'UFC',
+    match: 'Jon Jones vs. Stipe Miocic',
+    prediction: 'Jones by KO/TKO',
+    confidence: 81,
+    result: 'pending',
+    explanation: 'Jones has significant reach and striking advantages.',
+    date: new Date().toISOString()
+  },
+  {
+    id: '5',
+    sport: 'NHL',
+    match: 'Toronto Maple Leafs vs. Montreal Canadiens',
+    prediction: 'Under 5.5 Goals',
+    confidence: 76,
+    result: 'loss',
+    explanation: 'Both teams have strong goalies and have played low-scoring games recently.',
+    date: new Date().toISOString()
+  },
+  {
+    id: '6',
+    sport: 'Soccer',
+    match: 'Manchester City vs. Liverpool',
+    prediction: 'Both Teams to Score',
+    confidence: 88,
+    result: 'win',
+    explanation: 'Both teams are offensive powerhouses with some defensive weaknesses.',
+    date: new Date().toISOString()
+  }
+];
+
+const sampleMessages: Message[] = [
+  {
+    id: '1',
+    content: 'Hi, I need some good picks for NFL games this weekend',
+    role: 'user',
+    timestamp: new Date(Date.now() - 3600000)
+  },
+  {
+    id: '2',
+    content: "I've analyzed the upcoming NFL matchups and have three strong recommendations for you. The Chiefs are favored at home against the Bengals, and I'm seeing value in taking the Chiefs to cover. The Bills vs Jets game looks like it will be a low-scoring affair, so consider the under. And for a value pick, the Lions have a good chance to upset the Vikings based on current form.",
+    role: 'assistant',
+    timestamp: new Date(Date.now() - 3500000)
+  },
+  {
+    id: '3',
+    content: 'Thanks! What about NBA games tonight?',
+    role: 'user',
+    timestamp: new Date(Date.now() - 1800000)
+  },
+  {
+    id: '4',
+    content: "For NBA games tonight, I like the Celtics to cover against the Lakers. The Celtics' perimeter defense matches up well against the Lakers' shooters. The Bucks vs 76ers game has value on the over, as both teams have been scoring well and have defensive injuries. I'd avoid the Suns vs Warriors game as it's too unpredictable with recent roster changes.",
+    role: 'assistant',
+    timestamp: new Date(Date.now() - 1700000)
+  }
+];
+
 export default function GeniePlatform() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-  const [picks, setPicks] = useState<Pick[]>([])
-  const [messages, setMessages] = useState<Message[]>([])
+  const [picks, setPicks] = useState<Pick[]>(samplePicks)
+  const [messages, setMessages] = useState<Message[]>(sampleMessages)
   const [newMessage, setNewMessage] = useState('')
   const [selectedTab, setSelectedTab] = useState<'picks' | 'chat' | 'packages'>('picks')
   const router = useRouter()
@@ -38,8 +129,7 @@ export default function GeniePlatform() {
 
   useEffect(() => {
     checkUser()
-    fetchPicks()
-    fetchMessages()
+    fetchData()
   }, [])
 
   const checkUser = async () => {
@@ -52,22 +142,30 @@ export default function GeniePlatform() {
     }
   }
 
-  const fetchPicks = async () => {
-    const { data, error } = await supabase
-      .from('picks')
-      .select('*')
-      .order('date', { ascending: false })
-    
-    if (data) setPicks(data)
-  }
+  const fetchData = async () => {
+    try {
+      // Attempt to fetch real data
+      const { data: picksData } = await supabase
+        .from('picks')
+        .select('*')
+        .order('date', { ascending: false })
+      
+      if (picksData && picksData.length > 0) {
+        setPicks(picksData)
+      }
 
-  const fetchMessages = async () => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .order('timestamp', { ascending: true })
-    
-    if (data) setMessages(data)
+      const { data: messagesData } = await supabase
+        .from('messages')
+        .select('*')
+        .order('timestamp', { ascending: true })
+      
+      if (messagesData && messagesData.length > 0) {
+        setMessages(messagesData)
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error)
+      // Keep sample data if fetch fails
+    }
   }
 
   const handleSignOut = async () => {
@@ -89,8 +187,7 @@ export default function GeniePlatform() {
     setMessages(prev => [...prev, message])
     setNewMessage('')
 
-    // TODO: Integrate with actual AI backend
-    // For now, simulate a response
+    // Simulate AI response
     setTimeout(() => {
       const response: Message = {
         id: (Date.now() + 1).toString(),
@@ -251,7 +348,7 @@ export default function GeniePlatform() {
               </button>
             </div>
 
-            <div className="bg-gradient-to-b from-purple-500/20 to-blue-500/20 backdrop-blur-sm rounded-xl p-8 text-white border border-purple-500/30 transform scale-105">
+            <div className="bg-gradient-to-b from-purple-500/20 to-blue-500/20 backdrop-blur-sm rounded-xl p-8 text-white border border-purple-500/30 transform scale-105 relative">
               <div className="absolute top-0 right-0 bg-purple-500 text-white px-4 py-1 rounded-tr-xl rounded-bl-xl text-sm">
                 POPULAR
               </div>
