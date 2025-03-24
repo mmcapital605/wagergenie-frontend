@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import Link from 'next/link';
 
 export default function AppLayout({
   children,
@@ -31,14 +32,32 @@ export default function AppLayout({
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <a href="/app" className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
+              <Link 
+                href="/app/dashboard" 
+                className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400"
+              >
                 WagerGenie
-              </a>
+              </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <a href="/app/dashboard" className="text-gray-300 hover:text-white">Dashboard</a>
-              <a href="/app/chat" className="text-gray-300 hover:text-white">Chat</a>
-              <a href="/app/settings" className="text-gray-300 hover:text-white">Settings</a>
+              <Link 
+                href="/app/dashboard" 
+                className="text-gray-300 hover:text-white transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link 
+                href="/app/chat" 
+                className="text-gray-300 hover:text-white transition-colors"
+              >
+                Chat
+              </Link>
+              <Link 
+                href="/app/settings" 
+                className="text-gray-300 hover:text-white transition-colors"
+              >
+                Settings
+              </Link>
             </div>
           </div>
         </div>

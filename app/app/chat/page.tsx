@@ -1,14 +1,18 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
-export default function Chat() {
-  const [messages, setMessages] = useState<any[]>([]);
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export default function ChatPage() {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -24,52 +28,24 @@ export default function Chat() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim()) return;
 
-    const userMessage = input.trim();
+    const userMessage = { role: 'user', content: input } as Message;
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
-    // Add user message to chat
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-
     try {
-      // For MVP, we'll use a simple response system
-      const mockResponses = [
-        "Based on my analysis, I recommend betting on the home team with a 75% confidence level.",
-        "The odds are in favor of the underdog today. Consider a small bet with 65% confidence.",
-        "This game is too close to call. I recommend staying away from this bet.",
-        "The over/under looks promising. Consider the over with 70% confidence.",
-        "The spread seems accurate. No strong recommendation for this game."
-      ];
-
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // TODO: Replace with actual API call to your AI backend
+      const response = await new Promise(resolve => 
+        setTimeout(() => resolve({ 
+          role: 'assistant', 
+          content: 'I am WagerGenie, your AI betting assistant. How can I help you today?' 
+        }), 1000)
+      );
       
-      const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
-      
-      // Add Genie's response to chat
-      setMessages(prev => [...prev, { role: 'assistant', content: randomResponse }]);
-
-      // Save the interaction to the database
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { error } = await supabase
-          .from('picks')
-          .insert([
-            {
-              user_id: session.user.id,
-              question: userMessage,
-              answer: randomResponse,
-              confidence: Math.floor(Math.random() * 30) + 65, // Random confidence between 65-95
-              sport: 'NBA', // For MVP, we'll use NBA as default
-              created_at: new Date().toISOString()
-            }
-          ]);
-
-        if (error) throw error;
-      }
-    } catch (error: any) {
+      setMessages(prev => [...prev, response as Message]);
+    } catch (error) {
       console.error('Error:', error);
       setMessages(prev => [...prev, { 
         role: 'assistant', 
@@ -81,53 +57,53 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)]">
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 mb-4">
+        <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 mb-2">
+          Chat with WagerGenie
+        </h1>
+        <p className="text-gray-300">
+          Ask me anything about sports betting, odds analysis, or betting strategies.
+        </p>
+      </div>
+
+      <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 mb-4 h-[60vh] overflow-y-auto">
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`mb-4 ${
+              message.role === 'user' ? 'text-right' : 'text-left'
+            }`}
           >
             <div
-              className={`max-w-[80%] rounded-lg p-4 ${
+              className={`inline-block max-w-[80%] rounded-lg p-3 ${
                 message.role === 'user'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-800/50 text-gray-300'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-700 text-gray-100'
               }`}
             >
-              <p className="whitespace-pre-wrap">{message.content}</p>
+              {message.content}
             </div>
           </div>
         ))}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-800/50 rounded-lg p-4">
-              <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-100"></div>
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-200"></div>
-              </div>
-            </div>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="flex space-x-4">
+      <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask the Genie about sports betting..."
-          className="input-field flex-1"
+          placeholder="Ask WagerGenie anything..."
+          className="flex-1 bg-gray-800/50 backdrop-blur-sm text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
           disabled={isLoading}
         />
         <button
           type="submit"
-          className="genie-button px-6"
-          disabled={isLoading || !input.trim()}
+          disabled={isLoading}
+          className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-colors disabled:opacity-50"
         >
-          Send
+          {isLoading ? 'Thinking...' : 'Send'}
         </button>
       </form>
     </div>
