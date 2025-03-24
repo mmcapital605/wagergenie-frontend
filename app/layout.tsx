@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'WagerGenie - Your Sports Betting Assistant',
-  description: 'Get winning sports betting picks powered by AI',
+  title: 'WagerGenie - AI Sports Betting Assistant',
+  description: 'Get winning picks backed by advanced AI analysis',
 }
 
 export default function RootLayout({
