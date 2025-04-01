@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with WagerGenie{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="p-6 bg-theme-blue">
+            <div class="flex items-center">
+                <span class="text-4xl mr-3">🧞</span>
+                <div>
+                    <h2 class="text-2xl font-bold text-white">WagerGenie</h2>
+                    <p class="text-blue-100">Your wishes are my command!</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="chat-messages" class="h-96 overflow-y-auto p-6 space-y-4">
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0">
+                    <span class="text-2xl">🧞</span>
+                </div>
+                <div class="flex-1 bg-gray-100 rounded-lg p-4">
+                    <p class="text-gray-900">Greetings, mighty one! I am WagerGenie, your mystical guide to sports betting success. What kind of pick do you seek today?</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-t p-4">
+            <form id="chat-form" class="flex space-x-4">
+                <input type="text" id="user-input" class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-theme-blue focus:ring-theme-blue" placeholder="Ask for your magical pick...">
+                <button type="submit" class="px-4 py-2 bg-theme-gold text-white rounded-lg hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-gold">
+                    Make a Wish
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('chat-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('user-input');
+    const message = input.value.trim();
+    if (!message) return;
+
+    // Add user message
+    addMessage(message, 'user');
+    input.value = '';
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message }),
+        });
+
+        const data = await response.json();
+        
+        if (data.message) {
+            // Subscription message
+            addMessage(data.message, 'genie');
+        } else {
+            // Format the pick nicely
+            const pickMessage = `
+                🎯 PICK: ${data.pick}
+                🎲 Confidence: ${data.confidence}%
+                💰 Odds: ${data.odds}
+            `;
+            addMessage(pickMessage, 'genie');
+        }
+    } catch (error) {
+        addMessage('My mystical powers seem to be experiencing technical difficulties. Please try again later.', 'genie');
+    }
+});
+
+function addMessage(message, sender) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'flex items-start space-x-4';
+    
+    const icon = sender === 'user' ? '👤' : '🧞';
+    const bgColor = sender === 'user' ? 'bg-theme-blue bg-opacity-10' : 'bg-gray-100';
+    
+    messageDiv.innerHTML = `
+        <div class="flex-shrink-0">
+            <span class="text-2xl">${icon}</span>
+        </div>
+        <div class="flex-1 ${bgColor} rounded-lg p-4">
+            <p class="text-gray-900 whitespace-pre-line">${message}</p>
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+</script>
+{% endblock %} 

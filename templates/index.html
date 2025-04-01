@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="text-center py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="lg:text-center">
+            <span class="text-8xl">🧞</span>
+            <h2 class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                Your Wishes Are My Command
+            </h2>
+            <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+                Let WagerGenie guide you to winning picks with magical precision and mystical insights.
+            </p>
+        </div>
+
+        <div class="mt-16">
+            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Free Plan -->
+                <div class="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
+                    <div class="px-6 py-8">
+                        <h3 class="text-2xl font-bold text-gray-900">Free Wishes</h3>
+                        <p class="mt-4 text-gray-500">Start with 3 free wishes, then 1 every 3 days</p>
+                        <p class="mt-8">
+                            <span class="text-4xl font-extrabold text-gray-900">$0</span>
+                            <span class="text-gray-500">/forever</span>
+                        </p>
+                    </div>
+                    <div class="px-6 py-4">
+                        <a href="{{ url_for('signup') }}" class="block w-full bg-theme-blue text-white text-center px-4 py-2 rounded-md hover:bg-blue-400">Get Started</a>
+                    </div>
+                </div>
+
+                <!-- Daily Plan -->
+                <div class="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200 border-2 border-theme-gold">
+                    <div class="px-6 py-8">
+                        <h3 class="text-2xl font-bold text-gray-900">Daily Wishes</h3>
+                        <p class="mt-4 text-gray-500">3 magical picks every day</p>
+                        <p class="mt-8">
+                            <span class="text-4xl font-extrabold text-gray-900">$19</span>
+                            <span class="text-gray-500">/day</span>
+                        </p>
+                        <p class="mt-2 text-sm text-gray-500">or $49/week</p>
+                    </div>
+                    <div class="px-6 py-4">
+                        <a href="{{ url_for('signup') }}" class="block w-full bg-theme-gold text-white text-center px-4 py-2 rounded-md hover:bg-yellow-400">Choose Plan</a>
+                    </div>
+                </div>
+
+                <!-- Premium Plan -->
+                <div class="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
+                    <div class="px-6 py-8">
+                        <h3 class="text-2xl font-bold text-gray-900">Unlimited Wishes</h3>
+                        <p class="mt-4 text-gray-500">Unlimited magical picks</p>
+                        <p class="mt-8">
+                            <span class="text-4xl font-extrabold text-gray-900">$100</span>
+                            <span class="text-gray-500">/week</span>
+                        </p>
+                    </div>
+                    <div class="px-6 py-4">
+                        <a href="{{ url_for('signup') }}" class="block w-full bg-theme-blue text-white text-center px-4 py-2 rounded-md hover:bg-blue-400">Choose Plan</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
